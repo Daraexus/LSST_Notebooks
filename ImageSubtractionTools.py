@@ -116,5 +116,45 @@ def SubtractImages(templateExposure, templateSigma,  scienceExposure, scienceSig
             )
 	return subtractRes.subtractedExposure
 
+def MakeCandidateList(templateExposure, scienceExposure):
+	templateFwhmPix = psfmatch.getFwhmPix(templateExposure.getPsf())
+	scienceFwhmPix = psfmatch.getFwhmPix(scienceExposure.getPsf())
+	kernelSize = makeKernelBasisList(psfmatch.kConfig, templateFwhmPix, scienceFwhmPix)[0].getWidth()
+	candidateList = psfmatch.makeCandidateList(templateExposure, scienceExposure, kernelSize)
+	return candidateList, templateFwhmPix, scienceFwhmPix
 
+def CalculateKernelCellSet(templateExposure, scienceExposure, candidateList):
+	kernelCellSet = psfmatch._buildCellSet(templateExposure.getMaskedImage(), scienceExposure.getMaskedImage(), candidateList)
+	return kernelCellSet
 
+def CalculateKernelBasisBic(templateExposure, templateFwhmPix, scienceExposure, scienceFwhmPix, candidateList):
+	tmpKernelCellSet = psfmatch._buildCellSet(templateExposure.getMaskedImage(), scienceExposure.getMaskedImage(), candidateList)
+	nbe = diffimTools.NbasisEvaluator(psfmatch.kConfig, templateFwhmPix, scienceFwhmPix)
+	bicDegrees = nbe(tmpKernelCellSet, psfmatch.log)
+	basisList = makeKernelBasisList(self.kConfig, templateFwhmPix, scienceFwhmPix, alardDefGauss=bicDegrees[0])
+	return basisList
+
+def CalculateKernelBasis(templateExposure, templateFwhmPix, scienceExposure, scienceFwhmPix, candidateList):
+	 basisList = makeKernelBasisList(psfmatch.kConfig, templateFwhmPix, scienceFwhmPix)
+	 return basisList
+
+def SolvePsfMatching(kernelCellSet, basisList):
+	return psfmatch._solve(kernelCellSet, basisList)
+
+def PsfConvolveImage(templateExposure, psfMatchingKernel, doNormalize=False):
+	psfMatchedImage = afwImage.MaskedImageF(templateExposure.getMaskedImage().getBBox(afwImage.PARENT))
+	afwMath.convolve(psfMatchedImage, templateExposure.getMaskedImage(), psfMatchingKernel, doNormalize)
+	return psfMatchedImage
+
+def SubtractImages(matchedImage, templateExposure, scienceExposure):
+	psfMatchedExposure = afwImage.makeExposure(matchedImage, scienceExposure.getWcs())
+	psfMatchedExposure.setFilter(templateExposure.getFilter())
+	psfMatchedExposure.setCalib(scienceExposure.getCalib())
+	
+	subtractedExposure = afwImage.ExposureF(scienceExposure, True)
+
+	subtractedMaskedImage  = subtractedExposure.getMaskedImage()
+     	subtractedMaskedImage -= psfMatchedExposure.getMaskedImage()
+        
+        #subtractedMaskedImage -= results.backgroundModel
+    	return subtractedMaskedImage
