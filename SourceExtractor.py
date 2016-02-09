@@ -53,19 +53,19 @@ def Show_image_and_footprints(exposure, initial_frame):
     npixMin=1
     threshold = afwDetection.Threshold(threshold5)
     fs0 = afwDetection.FootprintSet(smoothedIm, threshold, npixMin)
-    for footprint in fs0.getFootprints():
+    #for footprint in fs0.getFootprints():
 
-        print footprint.getCentroid()
-        displayUtils.drawFootprint(footprint, frame=frame)
+        #print footprint.getCentroid()
+        #displayUtils.drawFootprint(footprint, frame=frame)
     
     
-    ds9.mtv(mi, frame=frame, title="Measured sources")
+    #ds9.mtv(mi, frame=frame, title="Measured sources")
     grow =1
     if grow > 0:
         isotropic = False
         fs = afwDetection.FootprintSet(fs0, grow, isotropic)
-    for footprint in fs.getFootprints():
-        displayUtils.drawFootprint(footprint, frame=frame, ctype=ds9.BLUE)
+    #for footprint in fs.getFootprints():
+    #    displayUtils.drawFootprint(footprint, frame=frame, ctype=ds9.BLUE)
         
     fs.setMask(mi.getMask(), "DETECTED")
 
@@ -95,15 +95,15 @@ def Show_image_and_footprints(exposure, initial_frame):
         for alg in algorithms:
             alg.apply(source, exposure)
             
-    
-    ds9.setMaskTransparency(80)
-    with ds9.Buffering():
-        for source in cat:
-            xs = source.getCentroid().getX()-exposure.getX0()
-            ys = source.getCentroid().getY()-exposure.getY0()
+ #We dont want ds9. Do we?   
+ #   ds9.setMaskTransparency(80)
+ #   with ds9.Buffering():
+ #       for source in cat:
+ #           xs = source.getCentroid().getX()-exposure.getX0()
+ #           ys = source.getCentroid().getY()-exposure.getY0()
             #print source.getCentroid().getX(),exposure.getX0()
-            print source.getApFlux()
-            ds9.dot("+", xs, ys, frame=frame, size=10, ctype = ds9.YELLOW)
+#            print source.getApFlux()
+#            ds9.dot("+", xs, ys, frame=frame, size=10, ctype = ds9.YELLOW)
             
     frame += 1    
-    return cat
+    return cat, exposure
