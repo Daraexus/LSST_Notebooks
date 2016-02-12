@@ -1,6 +1,6 @@
 data/
 data2/
-*.png
+
 *.pdf
 _parent
 .ipynb_checkpoints/
