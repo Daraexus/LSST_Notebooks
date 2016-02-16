@@ -91,9 +91,9 @@ def Show_image_and_footprints(exposure, initial_frame):
     fs.makeSources(cat)
     print "Measuring %d objects" % (len(cat))
     
-    for source in cat:
-        for alg in algorithms:
-            alg.apply(source, exposure)
+    #for source in cat:
+    #    for alg in algorithms:
+    #        alg.apply(source, exposure)
             
  #We dont want ds9. Do we?   
  #   ds9.setMaskTransparency(80)
