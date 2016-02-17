@@ -1,8 +1,11 @@
 from IPython.display import Image, display_png
 
 import lsst.afw.display.ds9 as ds9
+import os
 
-
+def saveRemoteImage(path):
+    ds9.ds9Cmd('saveimage ' +path)
+    os.system("scp jpreyes@157.253.204.26:/home/jpreyes/"+  path +" /renoir_data_00/jpreyes/stacks/notebook_files/")
 
 def displayFigure(path):
     i =  Image(path)
