@@ -76,17 +76,25 @@ def Show_image_and_footprints(exposure, initial_frame):
     ctrlCentroid = measAlg.SdssCentroidControl()
     ctrlAperture = measAlg.SincFluxControl()
     ctrlAperture.radius2 = apRad
-    
+    ctrlShape = measAlg.SdssShapeControl()
+    ctrlFlux = measAlg.GaussianFluxControl()
+    ctrlPsf = measAlg.PsfFluxControl()
     schema = afwTable.SourceTable.makeMinimalSchema()
     algorithms = [
         measAlg.MeasureSourcesBuilder().addAlgorithm(ctrlCentroid).build(schema),
-        measAlg.MeasureSourcesBuilder().addAlgorithm(ctrlAperture).build(schema)]
+        measAlg.MeasureSourcesBuilder().addAlgorithm(ctrlAperture).build(schema),
+    	measAlg.MeasureSourcesBuilder().addAlgorithm(ctrlShape).build(schema),
+    	measAlg.MeasureSourcesBuilder().addAlgorithm(ctrlFlux).build(schema),
+    	measAlg.MeasureSourcesBuilder().addAlgorithm(ctrlPsf).build(schema)
+    ]
     cat = afwTable.SourceCatalog(schema)
     
     table = cat.table
     table.defineCentroid("centroid.sdss")
     table.defineApFlux("flux.sinc")
-    
+    table.defineShape("shape.sdss")
+    table.defineModelFlux("flux.gaussian")
+    table.definePsfFlux("flux.psf")
     # Measure sources
     fs.makeSources(cat)
     print "Measuring %d objects" % (len(cat))
@@ -107,3 +115,46 @@ def Show_image_and_footprints(exposure, initial_frame):
             
     frame += 1    
     return cat, exposure
+
+
+from lsst.meas.algorithms.detection import SourceDetectionTask
+from lsst.meas.algorithms.measurement import SourceMeasurementTask
+from lsst.pipe.tasks.measurePsf import MeasurePsfTask
+def Get_and_Measure_sources(exposure):
+
+    schema = afwTable.SourceTable.makeMinimalSchema()
+
+    config = SourceDetectionTask.ConfigClass()
+    config.reEstimateBackground = False
+    detectionTask = SourceDetectionTask(config=config, schema=schema)
+
+    table = afwTable.SourceTable.make(schema)
+    sources = detectionTask.run(table, exposure, sigma=2).sources
+
+    #schema =  sources.schema
+    config = SourceMeasurementTask.ConfigClass()
+    config.slots.psfFlux = "flux.sinc" # use of the psf flux is hardcoded in secondMomentStarSelector
+    measureTask = SourceMeasurementTask(schema, config=config)
+
+    config = MeasurePsfTask.ConfigClass()
+    starSelector = config.starSelector.apply()
+    starSelector.config.badFlags = ["flags.pixel.edge", "flags.pixel.cr.center", "flags.pixel.interpolated.center", "flags.pixel.saturated.center"]
+    psfDeterminer = config.psfDeterminer.apply()
+    psfDeterminer.config.sizeCellX = 128
+    psfDeterminer.config.sizeCellY = 128
+    psfDeterminer.config.spatialOrder = 1
+    psfDeterminer.config.nEigenComponents = 3
+    measurePsfTask = MeasurePsfTask(config=config, schema=schema)
+
+    table = afwTable.SourceTable.make(schema)
+    sources = detectionTask.run(table, exposure, sigma=2).sources
+    measureTask.measure(exposure, sources)
+
+
+    return sources, exposure
+
+
+
+
+
+
