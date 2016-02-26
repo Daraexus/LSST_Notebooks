@@ -80,6 +80,7 @@ def Show_image_and_footprints(exposure, initial_frame):
     ctrlFlux = measAlg.GaussianFluxControl()
     ctrlPsf = measAlg.PsfFluxControl()
     schema = afwTable.SourceTable.makeMinimalSchema()
+    schema.addField("classification.dipole", "F")
     algorithms = [
         measAlg.MeasureSourcesBuilder().addAlgorithm(ctrlCentroid).build(schema),
         measAlg.MeasureSourcesBuilder().addAlgorithm(ctrlAperture).build(schema),
