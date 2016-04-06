@@ -8,7 +8,12 @@ source /renoir_data_00/fouchez/lsst/DM/stacks/v11.0/loadLSST.bash
 #setup obs_cfht DM-1593
 setup pipe_tasks yusra
 setup ip_diffim master
-setup obs_lsstSim master
+
+
+setup display_ds9
+setup obs_cfht v11
+setup astrometry_net_data CFHT-Deep
+
 
 #cd data/CFHTLS
 #mkdir input
