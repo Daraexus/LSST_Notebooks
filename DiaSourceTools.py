@@ -1,6 +1,7 @@
 
 import lsst.afw.geom as afwGeom
 import lsst.afw.display.utils as displayUtils
+import matplotlib.pyplot as plt
 import numpy as np
 
 def get_stamp(source, exposure, offset=10):
@@ -62,3 +63,80 @@ def get_naive_dipole_probability(source):
         return 1.0
     else:
         return 0.0
+
+
+
+def plot_cumulative_flux(stamp, plane_mask="DETECTED", positive=True):
+
+    mi = stamp.getMaskedImage()
+    m = mi.getMask()
+    values = []
+    for x in range(stamp.getWidth()):
+        for y in range(stamp.getHeight()):
+            
+            planeb_mask = m.getPlaneBitMask(plane_mask)
+            
+            val = mi.getImage().get(x,y)
+         
+            if planeb_mask & m[x,y].get(0,0) != 0:
+                #print mi.get(x,y)
+                
+                if positive:
+                    if val > 0:
+                        values.append(np.abs(val))
+                else:
+                    if val < 0:
+                        values.append(np.abs(val))
+                        
+        
+    if len(values) > 0:           
+        values.sort()
+      
+
+
+        base = [i for i in range(len(values))]
+        
+        
+        cumulative = np.cumsum(values)
+        cumulative = cumulative/cumulative[-1]
+          
+        first = False
+        f = 0
+        second = False
+        s = 0
+        third = False
+        t = 0
+        forth = False
+        fo = 0
+        for val, b in zip(cumulative, base):
+            if not forth and float(b+1) / float(base[-1]+1) > 0.90:
+                print "10% of sources contribute " +str((1.0-val)*100)+ "% of total flux"
+                forth = True
+                fo=b
+            
+            if not first and float(b+1) / float(base[-1]+1) > 0.25:
+                print float(b+1) / float(base[-1]+1), b
+                print "75% of sources contribute " +str((1.0-val)*100)+ "% of total flux"
+                first = True
+                f=b
+            if not second and float(b+1) / float(base[-1]+1) > 0.50:
+                print "50% of sources contribute " +str((1.0-val)*100)+ "% of total flux"
+                second = True
+                s=b
+            if not third and float(b+1) / float(base[-1]+1) > 0.75:
+                print "25% of sources contribute " +str((1.0-val)*100)+ "% of total flux"
+                third = True
+                t=b
+            
+        plt.step(base, cumulative)
+        axes = plt.axes()
+        axes.set_xlim(xmax = base[-1])
+        
+        plt.axvline(f, color='r', linestyle='dashed', linewidth=2)
+        plt.axvline(s, color='g', linestyle='dashed', linewidth=2)
+        plt.axvline(t, color='b', linestyle='dashed', linewidth=2)
+        plt.axvline(fo, color='y', linestyle='dashed', linewidth=2)
+        
+        plt.show()
+    else:
+        print "No values for mask "+ plane_mask
