@@ -3,6 +3,10 @@ import lsst.afw.geom as afwGeom
 import lsst.afw.display.utils as displayUtils
 import matplotlib.pyplot as plt
 import numpy as np
+import lsst.afw.table as afwTable
+from lsst.meas.algorithms.detection import SourceDetectionTask
+
+
 
 def get_stamp(source, exposure, offset=10):
 
@@ -64,6 +68,63 @@ def get_naive_dipole_probability(source):
     else:
         return 0.0
 
+def detect_diasources(exposure, doSmooth=False):
+
+    schema = afwTable.SourceTable.makeMinimalSchema()
+    table = afwTable.SourceTable.make(schema)
+
+    config = SourceDetectionTask.ConfigClass()
+    config.thresholdPolarity = "both"
+    config.thresholdValue = 5.5
+    config.reEstimateBackground = False
+    config.thresholdType = "pixel_stdev"
+
+    detectionTask = SourceDetectionTask(config=config, schema=schema)
+    table = afwTable.SourceTable.make(schema)
+    results = detectionTask.makeSourceCatalog(table=table, exposure=exposure , doSmooth=doSmooth )
+
+    return results
+
+def get_cumulative_flux(stamp, plane_mask="DETECTED", positive=True):
+
+	
+
+    mi = stamp.getMaskedImage()
+    m = mi.getMask()
+    values = []
+    for x in range(stamp.getWidth()):
+        for y in range(stamp.getHeight()):
+
+            planeb_mask = m.getPlaneBitMask(plane_mask)
+
+            val = mi.getImage().get(x,y)
+
+            if planeb_mask & m[x,y].get(0,0) != 0:
+                #print mi.get(x,y)
+
+                if positive:
+                    if val > 0:
+                        values.append(np.abs(val))
+                else:
+                    if val < 0:
+                        values.append(np.abs(val))
+
+
+    if len(values) > 0:
+        values.sort()
+
+
+
+        base = [i for i in range(len(values))]
+
+
+        cumulative = np.cumsum(values)
+        cumulative = cumulative/cumulative[-1]
+
+	return cumulative
+    else:
+	return None
+
 
 
 def plot_cumulative_flux(stamp, plane_mask="DETECTED", positive=True):
@@ -99,7 +160,7 @@ def plot_cumulative_flux(stamp, plane_mask="DETECTED", positive=True):
         
         cumulative = np.cumsum(values)
         cumulative = cumulative/cumulative[-1]
-          
+         
         first = False
         f = 0
         second = False
@@ -109,11 +170,11 @@ def plot_cumulative_flux(stamp, plane_mask="DETECTED", positive=True):
         forth = False
         fo = 0
         for val, b in zip(cumulative, base):
+	    #print b, float(b+1) / float(base[-1]+1), 1.0- val
             if not forth and float(b+1) / float(base[-1]+1) > 0.90:
                 print "10% of sources contribute " +str((1.0-val)*100)+ "% of total flux"
                 forth = True
-                fo=b
-            
+                fo=b 
             if not first and float(b+1) / float(base[-1]+1) > 0.25:
                 print float(b+1) / float(base[-1]+1), b
                 print "75% of sources contribute " +str((1.0-val)*100)+ "% of total flux"
@@ -138,5 +199,8 @@ def plot_cumulative_flux(stamp, plane_mask="DETECTED", positive=True):
         plt.axvline(fo, color='y', linestyle='dashed', linewidth=2)
         
         plt.show()
+
+	return cumulative
     else:
-        print "No values for mask "+ plane_mask
+	print "No values for mask "+ plane_mask
+	return None
