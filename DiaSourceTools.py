@@ -36,10 +36,11 @@ def get_fluxes_and_sigmas(source_list, flux_variable):
 	fluxes = []
 	for source in source_list:
 		flux = source.get(flux_variable)
-		if np.isnan(flux) == False:
+		sigma = source.get(flux_variable+"Sigma")
+		if np.isnan(flux) == False and np.isnan(sigma) == False:
+		
 			fluxes.append(flux)
-			sigmas.append(source.get(flux_variable+"Sigma"))
-
+			sigmas.append(sigma)
 	return fluxes, sigmas
 
 def get_sources_over_sigma(source_list, sigma_t, flux_variable):
