@@ -5,8 +5,35 @@ import matplotlib.pyplot as plt
 import numpy as np
 import lsst.afw.table as afwTable
 from lsst.meas.algorithms.detection import SourceDetectionTask
+import lsst.meas.algorithms.detection as sDet
 
 
+def get_time_mosaic(butler, dataid_list, source, frame=1):
+    mosaic = displayUtils.Mosaic(gutter=5, background=3, mode="x")
+    
+    
+    
+    for dataid in dataid_list:
+        
+        mosaic_temp = displayUtils.Mosaic(gutter=0, background=0, mode="y")
+        
+        diffExp = butler.get("deepDiff_differenceExp", dataid)
+        sciExp  = butler.get("calexp", dataid)
+        tmpExp = butler.get("deepDiff_warpedExp", dataid)
+        bgConf = sDet.BackgroundConfig()
+        background,tmpExp = sDet.estimateBackground(tmpExp,bgConf,True)
+        
+        s1 = get_stamp(source, sciExp)
+        s2 = get_stamp(source, tmpExp)
+        s3 = get_stamp(source, diffExp)
+        
+        mosaic_temp.append(s1.getMaskedImage())
+        mosaic_temp.append(s2.getMaskedImage())
+        mosaic_temp.append(s3.getMaskedImage())
+        m = mosaic_temp.makeMosaic(frame=None, display=None).clone()
+        mosaic.append(m)
+        
+    mosaic.makeMosaic(frame=frame, title="time mosaic")
 
 def get_stamp(source, exposure, offset=10):
 
@@ -14,15 +41,33 @@ def get_stamp(source, exposure, offset=10):
         bbox = source.getFootprint().getBBox()
 
         mos = displayUtils.Mosaic()
-        Begin = afwGeom.Point2I(bbox.getBeginX(), bbox.getBeginY())
-        End = afwGeom.Point2I(bbox.getEndX(), bbox.getEndY())
+                
+
+	sourceRa = source.getRa()
+	sourceDec = source.getDec()
+
+
+	wcs = exposure.getWcs()
+
+
+	mos = displayUtils.Mosaic()
+
+
+	Center = afwGeom.Point2I(wcs.skyToPixel(sourceRa, sourceDec))
+
+	Begin = afwGeom.Point2D(Center.getX() - bbox.getHeight()/2., Center.getY() - bbox.getHeight()/2.)
+	Begin = afwGeom.Point2I(Begin)
+	End = afwGeom.Point2D(Center.getX() + bbox.getHeight()/2., Center.getY() + bbox.getHeight()/2.)
+	End = afwGeom.Point2I(End)
+
+
 
         ExpOrig = afwGeom.Point2I(exposure.getX0()-1, exposure.getY0()-1)
 
 
 
-        correctedBegin = bbox.getBegin()- ExpOrig
-        correctedEnd = bbox.getEnd() - ExpOrig
+        correctedBegin = Begin- ExpOrig
+        correctedEnd = End - ExpOrig
 
         correctedBegin= afwGeom.Point2I(correctedBegin.getX()-offset,correctedBegin.getY()-offset )
         correctedEnd = afwGeom.Point2I(correctedEnd.getX()+offset,correctedEnd.getY()+offset )
