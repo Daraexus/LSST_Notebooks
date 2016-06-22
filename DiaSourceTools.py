@@ -8,7 +8,7 @@ from lsst.meas.algorithms.detection import SourceDetectionTask
 import lsst.meas.algorithms.detection as sDet
 
 
-def get_time_mosaic(butler, dataid_list, source, frame=1):
+def get_time_mosaic(butler, dataid_list, source, frame=1, equalize=False, title="time_mosaic"):
     mosaic = displayUtils.Mosaic(gutter=5, background=3, mode="x")
     
     
@@ -27,13 +27,34 @@ def get_time_mosaic(butler, dataid_list, source, frame=1):
         s2 = get_stamp(source, tmpExp)
         s3 = get_stamp(source, diffExp)
         
+        if equalize == True:
+            s1 = equalize_image(s1)
+            s2 = equalize_image(s2)
+            s3 = equalize_image(s3)
+        
         mosaic_temp.append(s1.getMaskedImage())
         mosaic_temp.append(s2.getMaskedImage())
         mosaic_temp.append(s3.getMaskedImage())
         m = mosaic_temp.makeMosaic(frame=None, display=None).clone()
         mosaic.append(m)
         
-    mosaic.makeMosaic(frame=frame, title="time mosaic")
+    mosaic.makeMosaic(frame=frame, title=title)
+    
+def equalize_image(u_stamp):
+    stamp = u_stamp.clone()
+    image = stamp.getMaskedImage().getImage()
+    imarr = image.getArray()
+    max_im = np.max(imarr) 
+    min_im = np.min(imarr)
+    
+    tot = max_im - min_im
+    
+    
+    for x in range(image.getWidth()):
+        for y in range(image.getHeight()):
+            image.set(x,y, ((image.get(x,y)-min_im)/tot) *255.)
+            
+    return stamp
 
 def get_stamp(source, exposure, offset=10):
 
