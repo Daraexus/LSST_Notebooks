@@ -75,15 +75,17 @@ def get_stamp(source, exposure, offset=10):
 
 
 	Center = afwGeom.Point2I(wcs.skyToPixel(sourceRa, sourceDec))
+	
 
-	Begin = afwGeom.Point2D(Center.getX() - bbox.getHeight()/2., Center.getY() - bbox.getHeight()/2.)
+	Begin = afwGeom.Point2D(Center.getX() - bbox.getHeight()/2., Center.getY() - bbox.getWidth()/2.)
 	Begin = afwGeom.Point2I(Begin)
-	End = afwGeom.Point2D(Center.getX() + bbox.getHeight()/2., Center.getY() + bbox.getHeight()/2.)
+
+	End = afwGeom.Point2D(Center.getX() + bbox.getHeight()/2., Center.getY() + bbox.getWidth()/2.)
 	End = afwGeom.Point2I(End)
 
+	#print Center.getX(), Center.getY(), bbox.getHeight(), bbox.getWidth(), Begin, End, bbox
 
-
-        ExpOrig = afwGeom.Point2I(exposure.getX0()-1, exposure.getY0()-1)
+        ExpOrig = afwGeom.Point2I(exposure.getX0(), exposure.getY0())
 
 
 
@@ -92,8 +94,13 @@ def get_stamp(source, exposure, offset=10):
 
         correctedBegin= afwGeom.Point2I(correctedBegin.getX()-offset,correctedBegin.getY()-offset )
         correctedEnd = afwGeom.Point2I(correctedEnd.getX()+offset,correctedEnd.getY()+offset )
+	
 	bboxT = afwGeom.Box2I(correctedBegin,correctedEnd) 
+	
+	
+	print bboxT, bbox
 
+	bboxT = bbox
         #print bboxT.toString
         return exposure.Factory(exposure,bboxT, True)
 
@@ -135,14 +142,14 @@ def get_naive_dipole_probability(source):
     else:
         return 0.0
 
-def detect_diasources(exposure, doSmooth=False):
+def detect_diasources(exposure, doSmooth=False, threshold=5.5):
 
     schema = afwTable.SourceTable.makeMinimalSchema()
     table = afwTable.SourceTable.make(schema)
 
     config = SourceDetectionTask.ConfigClass()
     config.thresholdPolarity = "both"
-    config.thresholdValue = 5.5
+    config.thresholdValue = threshold
     config.reEstimateBackground = False
     config.thresholdType = "pixel_stdev"
 
