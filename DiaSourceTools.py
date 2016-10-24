@@ -91,14 +91,14 @@ def get_stamp(source, exposure, offset=10):
 
         correctedBegin = Begin- ExpOrig
         correctedEnd = End - ExpOrig
-
+	
         correctedBegin= afwGeom.Point2I(correctedBegin.getX()-offset,correctedBegin.getY()-offset )
         correctedEnd = afwGeom.Point2I(correctedEnd.getX()+offset,correctedEnd.getY()+offset )
 	
 	bboxT = afwGeom.Box2I(correctedBegin,correctedEnd) 
 	
 	
-	print bboxT, bbox
+	#print bboxT, bbox
 
 	bboxT = bbox
         #print bboxT.toString
