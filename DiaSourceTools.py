@@ -157,6 +157,14 @@ def detect_diasources(exposure, doSmooth=False, threshold=5.5):
     table = afwTable.SourceTable.make(schema)
     results = detectionTask.makeSourceCatalog(table=table, exposure=exposure , doSmooth=doSmooth )
 
+    fpSet = results.fpSets.positive
+    fpSet.merge(results.fpSets.negative, 2, 2, False)
+    diaSources = afwTable.SourceCatalog(table)
+    fpSet.makeSources(diaSources)
+
+
+    results.sources=diaSources
+    results.fpSets.positive = fpSet
     return results
 
 def get_cumulative_flux(stamp, plane_mask="DETECTED", positive=True):
