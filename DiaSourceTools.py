@@ -76,14 +76,23 @@ def get_stamp(source, exposure, offset=10):
 
 	Center = afwGeom.Point2I(wcs.skyToPixel(sourceRa, sourceDec))
 	
+	
+	height= bbox.getHeight()/2
+	width= bbox.getWidth()/2
 
-	Begin = afwGeom.Point2D(Center.getX() - bbox.getHeight()/2., Center.getY() - bbox.getWidth()/2.)
+	height=9
+	width=9
+	
+	centerX= (bbox.getEndX()+bbox.getBeginX())/2
+	centerY= (bbox.getEndY()+bbox.getBeginY())/2
+
+	Begin = afwGeom.Point2D(centerX - height, centerY - width)
 	Begin = afwGeom.Point2I(Begin)
-
-	End = afwGeom.Point2D(Center.getX() + bbox.getHeight()/2., Center.getY() + bbox.getWidth()/2.)
+	
+	End = afwGeom.Point2D(centerX + height+1, centerY + width+1)
 	End = afwGeom.Point2I(End)
 
-	#print Center.getX(), Center.getY(), bbox.getHeight(), bbox.getWidth(), Begin, End, bbox
+	
 
         ExpOrig = afwGeom.Point2I(exposure.getX0(), exposure.getY0())
 
@@ -95,14 +104,14 @@ def get_stamp(source, exposure, offset=10):
         correctedBegin= afwGeom.Point2I(correctedBegin.getX()-offset,correctedBegin.getY()-offset )
         correctedEnd = afwGeom.Point2I(correctedEnd.getX()+offset,correctedEnd.getY()+offset )
 	
+		
 	bboxT = afwGeom.Box2I(correctedBegin,correctedEnd) 
 	
 	
-	#print bboxT, bbox
-
-	bboxT = bbox
-        #print bboxT.toString
-        return exposure.Factory(exposure,bboxT, True)
+	
+	#bboxT = bbox
+        #print bboxT.toString, centerX, centerY
+	return exposure.Factory(exposure,bboxT, True)
 
 def get_fluxes_and_sigmas(source_list, flux_variable):
 	sigmas = []
