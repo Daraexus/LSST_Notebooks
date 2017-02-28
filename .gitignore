@@ -6,3 +6,4 @@ _parent
 .ipynb_checkpoints/
 diaSources.txt
 *catalogs/
+*.pickle
