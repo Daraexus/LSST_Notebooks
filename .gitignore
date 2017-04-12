@@ -7,3 +7,4 @@ _parent
 diaSources.txt
 *catalogs/
 *.pickle
+*.fits
