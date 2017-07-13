@@ -577,6 +577,46 @@ def build_lightcurve4(source_list, flux_parameter, filter):
     lightcurve = Table(data=lightcurve)
     return lightcurve
 
+def build_lightcurve5(source_list, flux_parameter, filter):
+    """
+    Assemble a light curve data table from available files.
+    """
+
+    bandpasses = [filter]
+
+
+    lightcurve = {}
+    lightcurve['classification'] = []
+    lightcurve['bandpass'] = []
+    lightcurve['mjd'] = []
+    lightcurve['ra'] = []
+    lightcurve['dec'] = []
+    lightcurve['flux'] = []
+    lightcurve['flux_error'] = []
+    lightcurve['zp'] = []
+    lightcurve['zpsys'] = []
+    #lightcurve['ccd'] = []
+
+
+    for src in source_list:
+
+        #print 'yep',visit
+        lightcurve['classification'].append(src['ip_diffim_ClassificationDipole_value'])
+        lightcurve['bandpass'].append(str('sdss' + bandpasses[0]))
+        
+        lightcurve['mjd'].append(src['mjd'])
+        lightcurve['ra'].append(src['coord_ra'])
+        lightcurve['dec'].append(src['coord_dec'])
+        lightcurve['flux'].append(src[flux_parameter])
+        lightcurve['flux_error'].append(src[flux_parameter+"Sigma"])
+        #lightcurve['flux'].append(src['base_CircularApertureFlux_12_0_flux'])
+        #lightcurve['flux_error'].append(src['base_CircularApertureFlux_12_0_fluxSigma'])
+        lightcurve['zp'].append(25.0)
+        lightcurve['zpsys'].append('ab')
+        #lightcurve['ccd'].append(src['ccd'])
+    lightcurve = Table(data=lightcurve)
+    return lightcurve
+
 def multi_match_catalogs(catalog_list, data_refs):
     multi_matches = None
 
