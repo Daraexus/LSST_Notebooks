@@ -63,9 +63,7 @@ def get_stamp(source, exposure, offset=10):
     
         bbox = source.getFootprint().getBBox()
 
-        mos = displayUtils.Mosaic()
-                
-
+       
 	sourceRa = source.getRa()
 	sourceDec = source.getDec()
 
@@ -73,8 +71,7 @@ def get_stamp(source, exposure, offset=10):
 	wcs = exposure.getWcs()
 
 
-	mos = displayUtils.Mosaic()
-
+	
 
 	Center = afwGeom.Point2I(wcs.skyToPixel(sourceRa, sourceDec))
 	
@@ -94,7 +91,9 @@ def get_stamp(source, exposure, offset=10):
 	End = afwGeom.Point2D(centerX + height+1, centerY + width+1)
 	End = afwGeom.Point2I(End)
 
-	
+	print centerX, centerY
+	print Begin, End
+	print exposure.getX0(), exposure.getY0()
 
         ExpOrig = afwGeom.Point2I(exposure.getX0(), exposure.getY0())
 
@@ -102,7 +101,8 @@ def get_stamp(source, exposure, offset=10):
 
         correctedBegin = Begin- ExpOrig
         correctedEnd = End - ExpOrig
-	
+
+    
         correctedBegin= afwGeom.Point2I(correctedBegin.getX()-offset,correctedBegin.getY()-offset )
         correctedEnd = afwGeom.Point2I(correctedEnd.getX()+offset,correctedEnd.getY()+offset )
 	
@@ -112,8 +112,9 @@ def get_stamp(source, exposure, offset=10):
 	
 	
 	#bboxT = bbox
-        #print bboxT.toString, centerX, centerY
-	return exposure.Factory(exposure,bboxT, True)
+        print bboxT.toString()
+        print exposure.getBBox().toString()
+	return exposure.Factory(exposure,bboxT, deep=True)
 
 def get_fluxes_and_sigmas(source_list, flux_variable):
 	sigmas = []

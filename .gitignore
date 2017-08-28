@@ -8,3 +8,4 @@ diaSources.txt
 *catalogs/
 *.pickle
 *.fits
+*.dat
