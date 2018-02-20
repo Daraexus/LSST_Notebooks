@@ -342,6 +342,43 @@ def build_light_curve_from_snls_file(data, coord):
     lc = Table(data=lightcurve)
     return lc
 
+def build_light_curve_from_snls_file_2(data, coord, id, z):
+
+
+    lightcurve = {}
+    lightcurve['id'] = []
+    lightcurve['z'] = []
+    lightcurve['bandpass'] = []
+    lightcurve['mjd'] = []
+    lightcurve['ra'] = []
+    lightcurve['dec'] = []
+    lightcurve['flux'] = []
+    lightcurve['flux_error'] = []
+    lightcurve['zp'] = []
+    lightcurve['zpsys'] = []
+
+    
+
+    for bandpass, mjd, flux, error in data:
+
+        #print 'yep',visit
+        lightcurve['id'].append(id)
+        lightcurve['z'].append(z)
+        lightcurve['bandpass'].append(str('sdss' + bandpass))
+        lightcurve['mjd'].append(float(mjd))
+        lightcurve['ra'].append(coord.ra.radian)
+        lightcurve['dec'].append(coord.dec.radian)
+        lightcurve['flux'].append(float(flux))
+        lightcurve['flux_error'].append(float(error))
+        #lightcurve['flux'].append(src['base_CircularApertureFlux_12_0_flux'])
+        #lightcurve['flux_error'].append(src['base_CircularApertureFlux_12_0_fluxSigma'])
+        lightcurve['zp'].append(25.0)
+        lightcurve['zpsys'].append('ab')
+
+    lc = Table(data=lightcurve)
+    return lc
+
+
 def build_lightcurve(source_list):
     """
     Assemble a light curve data table from available files.
