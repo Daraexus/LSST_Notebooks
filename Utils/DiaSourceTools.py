@@ -8,7 +8,9 @@ from lsst.meas.algorithms.detection import SourceDetectionTask
 import lsst.meas.algorithms.detection as sDet
 from astropy.table import Table
 
-
+import astropy.coordinates as coord
+import astropy.units as u
+import re
 
 def get_time_mosaic(butler, dataid_list, source, frame=1, equalize=False, title="time_mosaic"):
     mosaic = displayUtils.Mosaic(gutter=5, background=3, mode="x")
@@ -416,6 +418,95 @@ def build_lightcurve(source_list):
         lightcurve['zpsys'].append('ab')
     lightcurve = Table(data=lightcurve)
     return lightcurve
+
+def match_with_lc(validation_array, candidate_array):
+    matches = []
+    for lc in validation_array:
+        #print "light curve"
+        val = {"ra":lc[0]["ra"], "dec":lc[0]["dec"]}
+        #print np.rad2deg(lc[0]["ra"]), np.rad2deg(lc[0]["dec"])
+        for i, slc in enumerate(candidate_array):
+
+            comp = {"ra":np.mean(slc["ra"]), "dec":np.mean(slc["dec"])}
+            if source_distance(val, comp)<1:
+                print i
+                matches.append((lc,slc))
+
+
+    print len(matches)
+    return matches
+
+
+def load_SNLS_SN():
+    
+    f = open('/renoir_data_02/jpreyes/lsst_data/sn_control/J_A+A_523_A7_table9.dat.txt','r')
+    data_elems = f.read()
+    elems = re.findall('^(.*?D3.*?)\\|(.*?)\\|(.*?)\\|(.*?)\\|(.*?)\\|(.*?)\\|(.*?)\\|', data_elems, re.MULTILINE)
+    f.close()
+
+    f = open('/renoir_data_02/jpreyes/lsst_data/sn_control/J_A+A_523_A7_table10.dat.txt','r')
+    data = f.read()
+    f.close()
+    
+    snls_array = []
+    for sn in elems:
+
+            c = coord.SkyCoord(sn[1], unit=(u.hourangle, u.deg))
+
+            m = re.findall('^'+str(sn[0])+'\\|(r|g|z|i)\\|(.*?)\\|(.*?)\\|(.*?)$', data, re.MULTILINE)
+
+            snls_lc = build_light_curve_from_snls_file_2(m, c, sn[0], sn[-1])
+
+            if len(m)>0:
+                #print sn[0], c.ra.deg, c.dec.deg
+
+                #plt.errorbar(snls_lc['mjd'], snls_lc['flux'], yerr=snls_lc['flux_error'], fmt='.', color='blue')
+                #
+
+                snls_array.append(snls_lc)
+    return snls_array
+
+
+def build_lightcurve6(source_list, flux_parameter, filters):
+    """
+    Assemble a light curve data table from available files.
+    """
+
+    bandpasses = filters
+
+
+    lightcurve = {}
+    lightcurve['classification'] = []
+    lightcurve['bandpass'] = []
+    lightcurve['mjd'] = []
+    lightcurve['ra'] = []
+    lightcurve['dec'] = []
+    lightcurve['flux'] = []
+    lightcurve['flux_error'] = []
+    lightcurve['zp'] = []
+    lightcurve['zpsys'] = []
+    #lightcurve['ccd'] = []
+
+
+    for src in source_list:
+
+        #print 'yep',visit
+        lightcurve['classification'].append(src['ip_diffim_ClassificationDipole_value'])
+        lightcurve['bandpass'].append(str('sdss' + bandpasses[int(src['filter'])]))
+
+        lightcurve['mjd'].append(src['mjd'])
+        lightcurve['ra'].append(src['coord_ra'])
+        lightcurve['dec'].append(src['coord_dec'])
+        lightcurve['flux'].append(src[flux_parameter])
+        lightcurve['flux_error'].append(src[flux_parameter+"Sigma"])
+        #lightcurve['flux'].append(src['base_CircularApertureFlux_12_0_flux'])
+        #lightcurve['flux_error'].append(src['base_CircularApertureFlux_12_0_fluxSigma'])
+        lightcurve['zp'].append(25.0)
+        lightcurve['zpsys'].append('ab')
+        #lightcurve['ccd'].append(src['ccd'])
+    lightcurve = Table(data=lightcurve)
+    return lightcurve
+
 
 def build_lightcurve_tuple(source_list, flux_parameter):
     """
